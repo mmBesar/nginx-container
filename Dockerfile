@@ -1,5 +1,6 @@
 FROM alpine:latest
 
+# Install nginx and dynamic modules
 RUN apk add --no-cache \
     nginx \
     nginx-mod-http-dav \
@@ -12,6 +13,7 @@ RUN apk add --no-cache \
     build-base \
     wget
 
+# Build nginx with RTMP module
 RUN mkdir -p /build && cd /build && \
     wget http://nginx.org/download/nginx-1.25.5.tar.gz && \
     tar -xzf nginx-1.25.5.tar.gz && \
@@ -23,9 +25,13 @@ RUN mkdir -p /build && cd /build && \
       --conf-path=/etc/nginx/nginx.conf \
       --with-http_ssl_module \
       --add-module=../nginx-rtmp-module && \
-    make && make install && \
-    cd / && rm -rf /build
+    make && make install && rm -rf /build
 
+# Ensure required directories exist
+RUN mkdir -p /config/site-confs /config/www /var/log/nginx
+
+# Expose relevant ports
 EXPOSE 80 443 1935
 
-CMD ["nginx", "-g", "daemon off;"]
+# Entrypoint: use config from /config/nginx.conf
+CMD ["nginx", "-c", "/config/nginx.conf", "-g", "daemon off;"]
